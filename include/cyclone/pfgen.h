@@ -40,6 +40,23 @@ namespace cyclone {
     };
 
     /**
+     * a force generator to apply uplift
+     */
+    class ParticleUplift : public ParticleForceGenerator
+    {
+        Vector3 location;
+        real radius;
+        real strength;
+
+    public:
+
+        ParticleUplift(const Vector3& location, const real radius, const real strength);
+
+        virtual void updateForce(Particle *particle, real duration);
+
+    };
+
+    /**
      * A force generator that applies a gravitational force. One instance
      * can be used for multiple particles.
      */
@@ -54,6 +71,36 @@ namespace cyclone {
         ParticleGravity(const Vector3 &gravity);
 
         /** Applies the gravitational force to the given particle. */
+        virtual void updateForce(Particle *particle, real duration);
+    };
+
+    /**
+     * A fixed point implementation of gravity
+     */
+    class ParticlePointGravity : public ParticleForceGenerator
+    {
+        Vector3 point;
+        real strength;
+
+    public:
+        ParticlePointGravity(const Vector3 &point, const real strength);
+
+        virtual void updateForce(Particle *particle, real duration);
+    };
+
+    /**
+     * A point gravity implementation that scales with distance squared
+     */
+    class DistanceSquareGravity : public ParticleForceGenerator
+    {
+        Vector3 point;
+        real mass;
+        real c_G = 6.67 * 0.000000000001;
+
+
+    public:
+        DistanceSquareGravity(const Vector3 &point, const real mass);
+
         virtual void updateForce(Particle *particle, real duration);
     };
 
@@ -76,6 +123,23 @@ namespace cyclone {
 
         /** Applies the drag force to the given particle. */
         virtual void updateForce(Particle *particle, real duration);
+    };
+
+
+    /**
+     * a toggleable particle drag generator
+     */
+
+    class ParticleAirBrake : public ParticleForceGenerator
+    {
+        real k1, k2;
+        bool enabled;
+
+    public:
+        ParticleAirBrake(real k1, real k2, bool enabled);
+
+        virtual void updateForce(Particle *particle, real duration);
+        virtual void toggleEnabled();
     };
 
     /**

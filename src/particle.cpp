@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <cyclone/particle.h>
+#include <math.h>
 
 using namespace cyclone;
 
@@ -162,4 +163,38 @@ void Particle::clearAccumulator()
 void Particle::addForce(const Vector3 &force)
 {
     forceAccum += force;
+}
+
+// real Particle::getKineticEnergy() const
+// {
+// 	// 1/2 m |v|^2
+// 	return (real) (1/2) * Particle::getMass()  * (pow(velocity.x, 2) + pow(velocity.y, 2) + pow(velocity.z, 2) );
+//     // magnitude of velocity squared => pythag without square root (because squared)
+// }
+
+void Particle::integrateVelocityUpdateFrame(real duration)
+{
+    // We don't integrate things with zero mass.
+    if (inverseMass <= 0.0f) return;
+
+    assert(duration > 0.0);
+
+    // Update linear position.
+    position.addScaledVector(velocity, duration);
+
+    // Work out the acceleration from the force
+    Vector3 resultingAcc = acceleration;
+    resultingAcc.addScaledVector(forceAccum, inverseMass);
+
+    // Update linear velocity from the acceleration.
+    velocity.addScaledVector(resultingAcc, duration);
+
+    // Impose drag. //TODONE: change, get rid of power
+    /*
+     * Eq 3.5: velocity_new = velocity * damping + accel * dt
+     */
+    velocity *= damping;
+
+    // Clear the forces.
+    clearAccumulator();
 }

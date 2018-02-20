@@ -366,6 +366,10 @@ namespace cyclone {
          */
         void addForce(const Vector3 &force);
 
+        // real Particle::getKineticEnergy() const;
+
+        void integrateVelocityUpdateFrame(real duration);
+
 
     };
 }

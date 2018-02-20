@@ -23,3 +23,6 @@ bin/osx64/*
 !default.xcworkspace
 xcuserdata
 *.moved-aside
+
+
+.idea/

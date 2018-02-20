@@ -11,6 +11,9 @@
  */
 
 #include <cyclone/pfgen.h>
+#include <math.h>
+
+#include <iostream>
 
 using namespace cyclone;
 
@@ -32,6 +35,22 @@ void ParticleForceRegistry::add(Particle* particle, ParticleForceGenerator *fg)
     registrations.push_back(registration);
 }
 
+ParticleUplift::ParticleUplift(const Vector3& location, const real radius, const real strength)
+: location(location), radius(radius), strength(strength)
+{
+}
+
+void ParticleUplift::updateForce(Particle* particle, real duration)
+{
+    real distance = sqrt(pow((location.x - particle->getPosition().x), 2.0) + pow((location.z - particle->getPosition().z), 2.0));
+    if (distance <= radius)
+    {
+        Vector3 up = Vector3(0.0, 1.0, 0.0);
+
+        particle->addForce(up * strength);
+    }
+}
+
 ParticleGravity::ParticleGravity(const Vector3& gravity)
 : gravity(gravity)
 {
@@ -44,6 +63,52 @@ void ParticleGravity::updateForce(Particle* particle, real duration)
 
     // Apply the mass-scaled force to the particle
     particle->addForce(gravity * particle->getMass());
+}
+
+ParticlePointGravity::ParticlePointGravity(const Vector3& point, const real strength)
+: point(point), strength(strength)
+{
+}
+
+void ParticlePointGravity::updateForce(Particle* particle, real duration)
+{
+    // Check that we do not have infinite mass
+    if (!particle->hasFiniteMass()) return;
+
+    // Calculate direction vector
+    Vector3 direction = point - particle->getPosition();
+
+    // Apply the mass-scaled force to the particle
+    particle->addForce(direction * strength * particle->getMass());
+}
+
+DistanceSquareGravity::DistanceSquareGravity(const Vector3& point, const real mass)
+: point(point), mass(mass)
+{
+}
+
+void DistanceSquareGravity::updateForce(Particle* particle, real duration)
+{
+    // Check that we do not have infinite mass
+    if (!particle->hasFiniteMass()) return;
+
+    // Calculate direction vector
+    Vector3 direction = point - particle->getPosition();
+
+    // Calculate distance between points
+    real distance = sqrt(pow((point.x - particle->getPosition().x), 2.0) + pow((point.y - particle->getPosition().y), 2.0) + pow((point.z - particle->getPosition().z), 2.0));
+
+    real inverse_distance = 1 / (distance * distance);
+
+    // Normalize direction vector
+    // direction = direction * inverse_distance;
+
+    Vector3 force = (direction * c_G * particle->getMass() * mass) * inverse_distance;
+    //TODO: scale by 1/distance squared
+    //f = G m1 m2 /r^2
+
+    // Apply the mass-scaled force to the particle
+    particle->addForce(force);
 }
 
 ParticleDrag::ParticleDrag(real k1, real k2)
@@ -64,6 +129,33 @@ void ParticleDrag::updateForce(Particle* particle, real duration)
     force.normalise();
     force *= -dragCoeff;
     particle->addForce(force);
+}
+
+ParticleAirBrake::ParticleAirBrake(real k1, real k2, bool enabled)
+: k1(k1), k2(k2), enabled(enabled)
+{
+}
+
+void ParticleAirBrake::toggleEnabled()
+{
+    enabled = !enabled;
+}
+
+void ParticleAirBrake::updateForce(Particle *particle, real duration)
+{
+    if(enabled) {
+        Vector3 force;
+        particle->getVelocity(&force);
+
+        // Calculate the total drag coefficient
+        real dragCoeff = force.magnitude();
+        dragCoeff = k1 * dragCoeff + k2 * dragCoeff * dragCoeff;
+
+        // Calculate the final force and apply it
+        force.normalise();
+        force *= -dragCoeff;
+        particle->addForce(force);
+    }
 }
 
 ParticleSpring::ParticleSpring(Particle *other, real sc, real rl)
