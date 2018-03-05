@@ -325,3 +325,54 @@ void ParticleAnchoredSpring::updateForce(Particle* particle, real duration)
     force *= magnitude;
     particle->addForce(force);
 }
+
+ParticleLimitedAnchoredSpring::ParticleLimitedAnchoredSpring(Vector3 *anchor, real sc, real rl, real ll)
+: anchor(anchor), springConstant(sc), restLength(rl), limitLength(ll)
+{
+}
+
+void ParticleLimitedAnchoredSpring::updateForce(Particle* particle, real duration)
+{
+    // Calculate the vector of the spring
+    Vector3 force;
+    particle->getPosition(&force);
+    force -= *anchor;
+
+    // Calculate the magnitude of the force
+    real magnitude = force.magnitude();
+    if (magnitude < restLength) return;
+
+    real scaler = 1.0;
+    if (magnitude > limitLength)
+    {
+        scaler = limitLength/magnitude;
+    }
+
+    magnitude = magnitude - restLength;
+    magnitude *= springConstant * scaler;
+
+    // Calculate the final force and apply it
+    force.normalise();
+    force *= -magnitude;
+    particle->addForce(force);
+}
+
+
+ParticleLighter::ParticleLighter(real volume, real airDensity)
+        :
+        volume(volume), airDensity(airDensity)
+{
+}
+
+void ParticleLighter::updateForce(Particle* particle, real duration)
+{
+    // Calculate the submersion depth
+    real height = particle->getPosition().y;
+
+    Vector3 force(0,0,0);
+    if (height <= 0) return;
+    force.y = (particle->getMass() / volume) / (airDensity * height);
+    if (force.y >= 1.0) return;
+    particle->addForce(force);
+    return;
+}

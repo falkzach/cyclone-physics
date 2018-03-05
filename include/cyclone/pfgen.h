@@ -95,7 +95,8 @@ namespace cyclone {
     {
         Vector3 point;
         real mass;
-        real c_G = 6.67 * 0.000000000001;
+//        real c_G = 6.67 * 0.000000000001;
+        real c_G = 6.67 * 0.001;
 
 
     public:
@@ -176,6 +177,39 @@ namespace cyclone {
 
         /** Applies the spring force to the given particle. */
         virtual void updateForce(Particle *particle, real duration);
+    };
+
+    /*
+     * A force generator that applies a spring force up until a limit, does not experience "damage"
+     */
+    class ParticleLimitedAnchoredSpring: ParticleForceGenerator
+    {
+    protected:
+        /** The location of the anchored end of the spring. */
+        Vector3 *anchor;
+
+        /** Holds the sprint constant. */
+        real springConstant;
+
+        /** Holds the rest length of the spring. */
+        real restLength;
+
+        /** The limit of the spring*/
+        real limitLength;
+
+    public:
+        /** Creates a new spring with the given parameters. */
+        ParticleLimitedAnchoredSpring(Vector3 *anchor,
+                               real springConstant,
+                               real restLength,
+                               real limitLength);
+
+        /** Retrieve the anchor point. */
+        const Vector3* getAnchor() const { return anchor; }
+
+        /** Applies the spring force to the given particle. */
+        virtual void updateForce(Particle *particle, real duration);
+
     };
 
     /**
@@ -354,6 +388,28 @@ namespace cyclone {
          * their corresponding particles.
          */
         void updateForces(real duration);
+    };
+
+    class ParticleLighter : public ParticleForceGenerator
+    {
+        /**
+         * The volume of the object.
+         */
+        real volume;
+
+        /**
+         * The density of the liquid. Pure water has a density of
+         * 1000kg per cubic meter.
+         */
+        real airDensity;
+
+    public:
+
+        /** Creates a new buoyancy force with the given parameters. */
+        ParticleLighter(real volume, real airDensity = 1.275f);
+
+        /** Applies the buoyancy force to the given particle. */
+        virtual void updateForce(Particle *particle, real duration);
     };
 }
 

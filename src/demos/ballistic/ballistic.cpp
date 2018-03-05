@@ -15,16 +15,7 @@
 #include "../app.h"
 #include "../timing.h"
 
-#include <cassert>
 #include <stdio.h>
-
-float randomFloatInRange(float min, float max) {
-    assert(max > min);
-    return min + (
-        ((float) rand()) / ((float) RAND_MAX)
-        * (max - min)
-    );
-}
 
 /**
  * The main demo class definition.
@@ -179,8 +170,7 @@ void BallisticDemo::fire()
 void BallisticDemo::update()
 {
     // Find the duration of the last frame in seconds
-    // float duration = (float)TimingData::get().lastFrameDuration * 0.001f;
-    float duration = randomFloatInRange(1.0/300.0, 1.0/20.0);
+    float duration = (float)TimingData::get().lastFrameDuration * 0.001f;
     if (duration <= 0.0f) return;
 
     // Update the physics of each particle in turn
